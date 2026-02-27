@@ -1,0 +1,17 @@
+[Unit]
+Description=Woolwich Station API
+After=network.target
+
+[Service]
+Type=simple
+User=smartinez
+WorkingDirectory=/home/smartinez/station_api
+ExecStart=/usr/bin/python3 /home/smartinez/station_api/main.py
+Restart=always
+RestartSec=5
+Environment=PORT=8177
+Environment=PYTHONUNBUFFERED=1
+Environment=DARWIN_TOKEN=your-darwin-token-here
+
+[Install]
+WantedBy=multi-user.target
