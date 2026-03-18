@@ -40,6 +40,8 @@ POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "60"))
 MAX_ARRIVALS = 10
 EXCLUDED_DESTINATIONS = {"Abbey Wood", "Rainham (Kent)"}
 
+from message import router as message_router, get_current_message
+
 # In-memory cache
 _cache = {"updated": None, "arrivals": []}
 
@@ -195,6 +197,7 @@ async def lifespan(application):
 
 
 app = FastAPI(title="Woolwich Station API", lifespan=lifespan)
+app.include_router(message_router)
 
 
 @app.get("/arrivals")

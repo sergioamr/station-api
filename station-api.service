@@ -11,7 +11,7 @@ Restart=always
 RestartSec=5
 Environment=PORT=8177
 Environment=PYTHONUNBUFFERED=1
-Environment=DARWIN_TOKEN=your-darwin-token-here
+Environment=DARWIN_TOKEN=cfd2b16e-fb2d-4517-9dc2-7e82ef56e317
 
 [Install]
 WantedBy=multi-user.target
