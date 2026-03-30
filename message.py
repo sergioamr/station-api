@@ -2,6 +2,7 @@
 
 import os
 import random
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,6 +10,70 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 router = APIRouter(prefix="/message", tags=["message"])
+
+# Spanish & co: vowels with tilde/dieresis, enye, c-cedilla (Catalan/Valencian), inverted punctuation.
+_SPANISH_TO_ASCII = str.maketrans({
+    # Lowercase vowels (incl. common variants beyond plain acute)
+    "á": "a", "à": "a", "ä": "a", "â": "a", "ã": "a", "å": "a",
+    "é": "e", "è": "e", "ë": "e", "ê": "e",
+    "í": "i", "ì": "i", "ï": "i", "î": "i",
+    "ó": "o", "ò": "o", "ö": "o", "ô": "o", "õ": "o",
+    "ú": "u", "ù": "u", "ü": "u", "û": "u",
+    "ñ": "n",
+    "ç": "c",
+    # Uppercase
+    "Á": "A", "À": "A", "Ä": "A", "Â": "A", "Ã": "A", "Å": "A",
+    "É": "E", "È": "E", "Ë": "E", "Ê": "E",
+    "Í": "I", "Ì": "I", "Ï": "I", "Î": "I",
+    "Ó": "O", "Ò": "O", "Ö": "O", "Ô": "O", "Õ": "O",
+    "Ú": "U", "Ù": "U", "Ü": "U", "Û": "U",
+    "Ñ": "N",
+    "Ç": "C",
+    # Punctuation
+    "¿": "?",
+    "¡": "!",
+})
+
+_ASCII_EXTRA = str.maketrans({
+    "ß": "ss",
+    "æ": "ae",
+    "Æ": "AE",
+    "ø": "o",
+    "Ø": "O",
+    "ð": "d",
+    "Ð": "D",
+    "þ": "th",
+    "Þ": "Th",
+    "ł": "l",
+    "Ł": "L",
+    "œ": "oe",
+    "Œ": "OE",
+    "‘": "'",
+    "’": "'",
+    "‚": "'",
+    "“": '"',
+    "”": '"',
+    "„": '"',
+    "—": "-",
+    "–": "-",
+    "…": "...",
+    "€": "EUR",
+    "£": "GBP",
+    "©": "(c)",
+    "®": "(R)",
+    "™": "(TM)",
+})
+
+
+def to_ascii_display(text: str) -> str:
+    """Fold text to 7-bit ASCII for embedded panels (storage stays UTF-8)."""
+    if not text:
+        return text
+    s = text.translate(_SPANISH_TO_ASCII)
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    s = s.translate(_ASCII_EXTRA)
+    return s.encode("ascii", "replace").decode("ascii")
 
 MESSAGES_FILE = Path(os.environ.get("MESSAGES_FILE", Path(__file__).parent / "messages.txt"))
 
@@ -36,8 +101,8 @@ def get_current_message():
 
 @router.get("")
 async def get_daily_message():
-    """Return the current message as JSON."""
-    return {"message": get_current_message()}
+    """Return the current message as JSON (ASCII for embedded displays)."""
+    return {"message": to_ascii_display(get_current_message())}
 
 
 @router.get("/admin", response_class=HTMLResponse)
