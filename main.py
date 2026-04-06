@@ -41,6 +41,7 @@ MAX_ARRIVALS = 10
 EXCLUDED_DESTINATIONS = {"Abbey Wood", "Rainham (Kent)"}
 
 from message import router as message_router, get_current_message
+from telegram_relay import router as telegram_router
 
 # In-memory cache
 _cache = {"updated": None, "arrivals": []}
@@ -198,6 +199,7 @@ async def lifespan(application):
 
 app = FastAPI(title="Woolwich Station API", lifespan=lifespan)
 app.include_router(message_router)
+app.include_router(telegram_router)
 
 
 @app.get("/arrivals")
